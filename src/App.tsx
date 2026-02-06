@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import { handlePermissions, listAvailableDevices, getMediaStreams } from "./ivs";
+import { handlePermissions, listAvailableDevices, getMediaStreams } from "./device";
 
 function App() {
   const { signOut } = useAuthenticator();

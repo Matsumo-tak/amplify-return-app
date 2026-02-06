@@ -38,3 +38,4 @@ export async function getMediaStreams(deviceId?: { video?: string; audio?: strin
     audio: { deviceId: deviceId?.audio || (window as any).audioDevices[0]?.deviceId },
   });
 }
+
