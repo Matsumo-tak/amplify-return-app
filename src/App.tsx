@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { handlePermissions, listAvailableDevices, getMediaStreams } from "./device";
+import { joinStage, leaveStage, createStrategy } from "./ivs";
+import { Stage } from 'amazon-ivs-web-broadcast';
 
 function App() {
   const { signOut } = useAuthenticator();
@@ -9,6 +11,11 @@ function App() {
   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
   const [selectedAudioId, setSelectedAudioId] = useState<string>('');
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [stage, setStage] = useState<Stage | null>(null);
+  const [strategy, setStrategy] = useState<any>(null);
+  const [isVideoMuted, setIsVideoMuted] = useState<boolean>(false);
+  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
+  const [token, setToken] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -62,12 +69,75 @@ function App() {
         </select>
       </div>
       {cameraStream && (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          style={{ width: '100%', maxWidth: '640px', marginBottom: '1rem' }}
-        />
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            style={{ width: '100%', maxWidth: '640px', marginBottom: '1rem' }}
+          />
+          <div style={{ marginBottom: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Stage Token"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              style={{ padding: '0.5rem', marginRight: '0.5rem', width: '300px' }}
+            />
+            {!stage ? (
+              <button onClick={async () => {
+                if (!token || !cameraStream) return;
+                const microphoneStream = (window as any).microphoneStream;
+                if (!microphoneStream) return;
+                
+                const audioTrack = microphoneStream.getAudioTracks()[0];
+                const videoTrack = cameraStream.getVideoTracks()[0];
+                const newStrategy = createStrategy(audioTrack, videoTrack);
+                const newStage = await joinStage(token, newStrategy);
+                setStrategy(newStrategy);
+                setStage(newStage);
+                setIsVideoMuted(false);
+                setIsAudioMuted(false);
+              }}>
+                配信開始
+              </button>
+            ) : (
+              <>
+                <button 
+                  onClick={() => {
+                    leaveStage(stage);
+                    setStage(null);
+                    setStrategy(null);
+                  }}
+                  style={{ marginRight: '0.5rem' }}
+                >
+                  配信終了
+                </button>
+                {strategy && (
+                  <>
+                    <button 
+                      onClick={() => {
+                        strategy.videoTrack.setMuted(!isVideoMuted);
+                        setIsVideoMuted(!isVideoMuted);
+                      }}
+                      style={{ marginRight: '0.5rem' }}
+                    >
+                      {isVideoMuted ? 'カメラON' : 'カメラOFF'}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        strategy.audioTrack.setMuted(!isAudioMuted);
+                        setIsAudioMuted(!isAudioMuted);
+                      }}
+                    >
+                      {isAudioMuted ? 'マイクON' : 'マイクOFF'}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </>
       )}
       <button onClick={signOut}>Sign out</button>
     </main>
