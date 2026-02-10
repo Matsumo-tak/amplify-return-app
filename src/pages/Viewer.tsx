@@ -34,12 +34,12 @@ function Viewer() {
       <div style={{ marginBottom: '1rem' }}>
         <button onClick={() => navigate('/')}>← ホームに戻る</button>
       </div>
-      <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}>視聴者モード</h1>
+      <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}>視聴モード</h1>
       
       <div>
         <h2 style={{ fontSize: 'clamp(1.2rem, 4vw, 1.5rem)' }}>配信映像</h2>
         {remoteParticipants.size === 0 ? (
-          <p>送り返しがありません</p>
+          <p>映像がありません</p>
         ) : (
           <div style={{ 
             display: 'grid', 
@@ -76,59 +76,61 @@ function Viewer() {
           {audioDevices.map(d => <option key={d.deviceId} value={d.deviceId}>{d.label || d.deviceId}</option>)}
         </select>
 
-        <button onClick={async () => {
-          await handlePermissions();
-          await listAvailableDevices();
-          const aDevices = (window as any).audioDevices || [];
-          setAudioDevices(aDevices);
-          if (aDevices.length > 0) {
-            setSelectedAudioId(aDevices[0].deviceId);
-            await getMediaStreams({ audio: aDevices[0].deviceId });
-            setMicrophoneStream((window as any).microphoneStream);
-            
-            // 既に配信中の場合は再接続
-            if (stage && token) {
-              console.log('マイク追加のため再接続します...');
-              // 一旦退出
-              leaveStage(stage);
-              setStage(null);
-              setStrategy(null);
+        {microphoneStream === null && (
+          <button onClick={async () => {
+            await handlePermissions();
+            await listAvailableDevices();
+            const aDevices = (window as any).audioDevices || [];
+            setAudioDevices(aDevices);
+            if (aDevices.length > 0) {
+              setSelectedAudioId(aDevices[0].deviceId);
+              await getMediaStreams({ audio: aDevices[0].deviceId });
+              setMicrophoneStream((window as any).microphoneStream);
               
-              // 少し待ってから再接続
-              setTimeout(async () => {
-                const audioTrack = (window as any).microphoneStream?.getAudioTracks()[0] || null;
-                const newStrategy = createViewerStrategy(audioTrack);
-                if (newStrategy.audioTrack) {
-                  newStrategy.audioTrack.setMuted(true);
-                }
+              // 既に配信中の場合は再接続
+              if (stage && token) {
+                console.log('マイク追加のため再接続します...');
+                // 一旦退出
+                leaveStage(stage);
+                setStage(null);
+                setStrategy(null);
                 
-                const newStage = new Stage(token, newStrategy);
-                
-                setupViewerStageEvents(
-                  newStage,
-                  (participantId, stream) => {
-                    setRemoteParticipants(prev => new Map(prev).set(participantId, stream));
-                  },
-                  (participantId) => {
-                    setRemoteParticipants(prev => {
-                      const newMap = new Map(prev);
-                      newMap.delete(participantId);
-                      return newMap;
-                    });
+                // 少し待ってから再接続
+                setTimeout(async () => {
+                  const audioTrack = (window as any).microphoneStream?.getAudioTracks()[0] || null;
+                  const newStrategy = createViewerStrategy(audioTrack);
+                  if (newStrategy.audioTrack) {
+                    newStrategy.audioTrack.setMuted(true);
                   }
-                );
-                
-                await newStage.join();
-                
-                setStrategy(newStrategy);
-                setStage(newStage);
-                setIsAudioMuted(true);
-              }, 500);
+                  
+                  const newStage = new Stage(token, newStrategy);
+                  
+                  setupViewerStageEvents(
+                    newStage,
+                    (participantId, stream) => {
+                      setRemoteParticipants(prev => new Map(prev).set(participantId, stream));
+                    },
+                    (participantId) => {
+                      setRemoteParticipants(prev => {
+                        const newMap = new Map(prev);
+                        newMap.delete(participantId);
+                        return newMap;
+                      });
+                    }
+                  );
+                  
+                  await newStage.join();
+                  
+                  setStrategy(newStrategy);
+                  setStage(newStage);
+                  setIsAudioMuted(true);
+                }, 500);
+              }
             }
-          }
-        }} style={{ width: '100%', maxWidth: '400px', padding: '0.75rem' }}>
-          マイクの使用許可のリクエスト
-        </button>
+          }} style={{ width: '100%', maxWidth: '400px', padding: '0.75rem' }}>
+            マイクの使用許可のリクエスト
+          </button>
+        )}
       </div>
 
       <div style={{ marginBottom: '1rem' }}>

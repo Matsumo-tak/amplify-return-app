@@ -43,23 +43,25 @@ function Host() {
       <div style={{ marginBottom: '1rem' }}>
         <button onClick={() => navigate('/')}>← ホームに戻る</button>
       </div>
-      <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}>配信者モード</h1>
-      <button onClick={async () => {
-        await handlePermissions();
-        await listAvailableDevices();
-        const vDevices = (window as any).videoDevices || [];
-        const aDevices = (window as any).audioDevices || [];
-        setVideoDevices(vDevices);
-        setAudioDevices(aDevices);
-        if (vDevices.length > 0 && aDevices.length > 0) {
-          setSelectedVideoId(vDevices[0].deviceId);
-          setSelectedAudioId(aDevices[0].deviceId);
-          await getMediaStreams({ video: vDevices[0].deviceId, audio: aDevices[0].deviceId });
-          setCameraStream((window as any).cameraStream);
-        }
-      }} style={{ marginBottom: '1rem', width: '100%', maxWidth: '400px', padding: '0.75rem' }}>
-        カメラ/マイクの使用許可のリクエスト
-      </button>
+      <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}>配信モード</h1>
+      {!cameraStream && (
+        <button onClick={async () => {
+          await handlePermissions();
+          await listAvailableDevices();
+          const vDevices = (window as any).videoDevices || [];
+          const aDevices = (window as any).audioDevices || [];
+          setVideoDevices(vDevices);
+          setAudioDevices(aDevices);
+          if (vDevices.length > 0 && aDevices.length > 0) {
+            setSelectedVideoId(vDevices[0].deviceId);
+            setSelectedAudioId(aDevices[0].deviceId);
+            await getMediaStreams({ video: vDevices[0].deviceId, audio: aDevices[0].deviceId });
+            setCameraStream((window as any).cameraStream);
+          }
+        }} style={{ marginBottom: '1rem', width: '100%', maxWidth: '400px', padding: '0.75rem' }}>
+          カメラ/マイクの使用許可のリクエスト
+        </button>
+      )}
       <div style={{ 
         display: 'flex', 
         flexDirection: 'column',
