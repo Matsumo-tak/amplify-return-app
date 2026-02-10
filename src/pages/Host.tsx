@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { handlePermissions, listAvailableDevices, getMediaStreams } from "../device";
 import { joinStage, leaveStage, createStrategy } from "../ivs";
 import { Stage } from 'amazon-ivs-web-broadcast';
@@ -8,6 +8,8 @@ import { Stage } from 'amazon-ivs-web-broadcast';
 function Host() {
   const { signOut, user } = useAuthenticator();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const stageArn = searchParams.get('stageArn') || '';
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
@@ -108,7 +110,7 @@ function Host() {
                   const res = await fetch(import.meta.env.VITE_CREATE_STAGE_TOKEN_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: user?.signInDetails?.loginId ?? '' }),
+                    body: JSON.stringify({ userId: user?.signInDetails?.loginId ?? '', stageArn }),
                   });
                   const data = await res.json();
                   const fetchedToken = data.token;
