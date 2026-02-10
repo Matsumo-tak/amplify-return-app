@@ -11,12 +11,20 @@ function Home() {
       alignItems: 'center', 
       justifyContent: 'center',
       minHeight: '100vh',
-      gap: '2rem'
+      gap: '2rem',
+      padding: '1rem'
     }}>
-      <h1>IVS配信アプリ</h1>
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <Link to="/host">
+      <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', textAlign: 'center' }}>IVS配信アプリ</h1>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: '1rem',
+        width: '100%',
+        maxWidth: '400px'
+      }}>
+        <Link to="/host" style={{ textDecoration: 'none' }}>
           <button style={{ 
+            width: '100%',
             padding: '1rem 2rem', 
             fontSize: '1.2rem',
             cursor: 'pointer'
@@ -24,8 +32,9 @@ function Home() {
             配信者として参加
           </button>
         </Link>
-        <Link to="/viewer">
+        <Link to="/viewer" style={{ textDecoration: 'none' }}>
           <button style={{ 
+            width: '100%',
             padding: '1rem 2rem', 
             fontSize: '1.2rem',
             cursor: 'pointer'

@@ -20,6 +20,7 @@ function Host() {
   const [token, setToken] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // ホスト参加者の映像を表示
   useEffect(() => {
     if (videoRef.current && cameraStream) {
       videoRef.current.srcObject = cameraStream;
@@ -36,11 +37,11 @@ function Host() {
   };
 
   return (
-    <main>
+    <main style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '1rem' }}>
         <button onClick={() => navigate('/')}>← ホームに戻る</button>
       </div>
-      <h1>配信者モード</h1>
+      <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}>配信者モード</h1>
       <button onClick={async () => {
         await handlePermissions();
         await listAvailableDevices();
@@ -54,21 +55,35 @@ function Host() {
           await getMediaStreams({ video: vDevices[0].deviceId, audio: aDevices[0].deviceId });
           setCameraStream((window as any).cameraStream);
         }
-      }} style={{ marginBottom: '1rem' }}>
+      }} style={{ marginBottom: '1rem', width: '100%', maxWidth: '400px', padding: '0.75rem' }}>
         カメラ/マイクの使用許可のリクエスト
       </button>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <select value={selectedVideoId} onChange={(e) => {
-          setSelectedVideoId(e.target.value);
-          updateMediaStream(e.target.value, selectedAudioId);
-        }}>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: '0.5rem', 
+        marginBottom: '1rem',
+        maxWidth: '400px'
+      }}>
+        <select 
+          value={selectedVideoId} 
+          onChange={(e) => {
+            setSelectedVideoId(e.target.value);
+            updateMediaStream(e.target.value, selectedAudioId);
+          }}
+          style={{ padding: '0.5rem', width: '100%' }}
+        >
           {videoDevices.length === 0 && <option>カメラを選択</option>}
           {videoDevices.map(d => <option key={d.deviceId} value={d.deviceId}>{d.label || d.deviceId}</option>)}
         </select>
-        <select value={selectedAudioId} onChange={(e) => {
-          setSelectedAudioId(e.target.value);
-          updateMediaStream(selectedVideoId, e.target.value);
-        }}>
+        <select 
+          value={selectedAudioId} 
+          onChange={(e) => {
+            setSelectedAudioId(e.target.value);
+            updateMediaStream(selectedVideoId, e.target.value);
+          }}
+          style={{ padding: '0.5rem', width: '100%' }}
+        >
           {audioDevices.length === 0 && <option>マイクを選択</option>}
           {audioDevices.map(d => <option key={d.deviceId} value={d.deviceId}>{d.label || d.deviceId}</option>)}
         </select>
@@ -79,7 +94,8 @@ function Host() {
             ref={videoRef}
             autoPlay
             playsInline
-            style={{ width: '100%', maxWidth: '640px', marginBottom: '1rem' }}
+            muted
+            style={{ width: '100%', maxWidth: '640px', marginBottom: '1rem', display: 'block' }}
           />
           <div style={{ marginBottom: '1rem' }}>
             <input
@@ -87,34 +103,43 @@ function Host() {
               placeholder="Stage Token"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              style={{ padding: '0.5rem', marginRight: '0.5rem', width: '300px' }}
+              style={{ 
+                padding: '0.5rem', 
+                marginBottom: '0.5rem',
+                width: '100%',
+                maxWidth: '400px',
+                display: 'block'
+              }}
             />
             {!stage ? (
-              <button onClick={async () => {
-                if (!token || !cameraStream) return;
-                const microphoneStream = (window as any).microphoneStream;
-                if (!microphoneStream) return;
-                
-                const audioTrack = microphoneStream.getAudioTracks()[0];
-                const videoTrack = cameraStream.getVideoTracks()[0];
-                const newStrategy = createStrategy(audioTrack, videoTrack);
-                const newStage = await joinStage(token, newStrategy);
-                setStrategy(newStrategy);
-                setStage(newStage);
-                setIsVideoMuted(false);
-                setIsAudioMuted(false);
-              }}>
+              <button 
+                onClick={async () => {
+                  if (!token || !cameraStream) return;
+                  const microphoneStream = (window as any).microphoneStream;
+                  if (!microphoneStream) return;
+                  
+                  const audioTrack = microphoneStream.getAudioTracks()[0];
+                  const videoTrack = cameraStream.getVideoTracks()[0];
+                  const newStrategy = createStrategy(audioTrack, videoTrack);
+                  const newStage = await joinStage(token, newStrategy);
+                  setStrategy(newStrategy);
+                  setStage(newStage);
+                  setIsVideoMuted(false);
+                  setIsAudioMuted(false);
+                }}
+                style={{ padding: '0.75rem 1.5rem' }}
+              >
                 配信開始
               </button>
             ) : (
-              <>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <button 
                   onClick={() => {
                     leaveStage(stage);
                     setStage(null);
                     setStrategy(null);
                   }}
-                  style={{ marginRight: '0.5rem' }}
+                  style={{ padding: '0.75rem 1.5rem' }}
                 >
                   配信終了
                 </button>
@@ -125,7 +150,7 @@ function Host() {
                         strategy.videoTrack.setMuted(!isVideoMuted);
                         setIsVideoMuted(!isVideoMuted);
                       }}
-                      style={{ marginRight: '0.5rem' }}
+                      style={{ padding: '0.75rem 1.5rem' }}
                     >
                       {isVideoMuted ? 'カメラON' : 'カメラOFF'}
                     </button>
@@ -134,12 +159,13 @@ function Host() {
                         strategy.audioTrack.setMuted(!isAudioMuted);
                         setIsAudioMuted(!isAudioMuted);
                       }}
+                      style={{ padding: '0.75rem 1.5rem' }}
                     >
                       {isAudioMuted ? 'マイクON' : 'マイクOFF'}
                     </button>
                   </>
                 )}
-              </>
+              </div>
             )}
           </div>
         </>
