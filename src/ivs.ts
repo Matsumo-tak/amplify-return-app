@@ -53,7 +53,33 @@ export function createViewerStrategy(audioTrack: MediaStreamTrack | null) {
   };
 }
 
-// Stageのイベントハンドラーを設定
+// Stageのイベントハンドラーを設定（配信者用：参加者の入退出を通知）
+export function setupHostStageEvents(
+  stage: Stage,
+  onParticipantJoined: (participantId: string, userId: string) => void,
+  onParticipantLeft: (participantId: string) => void
+) {
+  stage.on(StageEvents.STAGE_CONNECTION_STATE_CHANGED, (state) => {
+    console.log('接続状態が変化:', state);
+    if (state === StageConnectionState.ERRORED) {
+      console.error('Stage connection error');
+    }
+  });
+
+  stage.on(StageEvents.STAGE_PARTICIPANT_JOINED, (participant) => {
+    console.log('参加者が参加しました:', participant.id, 'userId:', participant.userId, 'isLocal:', participant.isLocal);
+    if (!participant.isLocal) {
+      onParticipantJoined(participant.id, participant.userId || participant.id);
+    }
+  });
+
+  stage.on(StageEvents.STAGE_PARTICIPANT_LEFT, (participant) => {
+    console.log('参加者が退出しました:', participant.id);
+    onParticipantLeft(participant.id);
+  });
+}
+
+// Stageのイベントハンドラーを設定（内部用）
 function setupStageEvents(stage: Stage) {
   stage.on(StageEvents.STAGE_CONNECTION_STATE_CHANGED, (state) => {
     if (state === StageConnectionState.ERRORED) {

@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { handlePermissions, listAvailableDevices, getMediaStreams } from "../device";
-import { joinStage, leaveStage, createStrategy } from "../ivs";
+import { leaveStage, createStrategy, setupHostStageEvents } from "../ivs";
 import { Stage } from 'amazon-ivs-web-broadcast';
 
 function Host() {
-  const { signOut, user } = useAuthenticator();
+  const { user } = useAuthenticator();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const stageArn = searchParams.get('stageArn') || '';
@@ -19,6 +19,7 @@ function Host() {
   const [strategy, setStrategy] = useState<any>(null);
   const [isVideoMuted, setIsVideoMuted] = useState<boolean>(false);
   const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
+  const [participants, setParticipants] = useState<Map<string, string>>(new Map());
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ホスト参加者の映像を表示
@@ -119,7 +120,23 @@ function Host() {
                   const audioTrack = microphoneStream.getAudioTracks()[0];
                   const videoTrack = cameraStream.getVideoTracks()[0];
                   const newStrategy = createStrategy(audioTrack, videoTrack);
-                  const newStage = await joinStage(fetchedToken, newStrategy);
+                  const newStage = new Stage(fetchedToken, newStrategy);
+                  
+                  setupHostStageEvents(
+                    newStage,
+                    (participantId, userId) => {
+                      setParticipants(prev => new Map(prev).set(participantId, userId));
+                    },
+                    (participantId) => {
+                      setParticipants(prev => {
+                        const newMap = new Map(prev);
+                        newMap.delete(participantId);
+                        return newMap;
+                      });
+                    }
+                  );
+                  
+                  await newStage.join();
                   setStrategy(newStrategy);
                   setStage(newStage);
                   setIsVideoMuted(false);
@@ -136,6 +153,7 @@ function Host() {
                     leaveStage(stage);
                     setStage(null);
                     setStrategy(null);
+                    setParticipants(new Map());
                   }}
                   style={{ padding: '0.75rem 1.5rem' }}
                 >
@@ -166,9 +184,21 @@ function Host() {
               </div>
             )}
           </div>
+          
+          {stage && (
+            <div style={{ marginTop: '1rem' }}>
+              <h3>参加者一覧 ({participants.size}人)</h3>
+              {participants.size === 0 ? (
+                <p>参加者がいません</p>
+              ) : (
+                Array.from(participants.entries()).map(([id, userId]) => (
+                  <p key={id} style={{ fontSize: '1rem', marginTop: '0.25rem' }}>{userId}</p>
+                ))
+              )}
+            </div>
+          )}
         </>
       )}
-      <button onClick={signOut}>Sign out</button>
     </main>
   );
 }

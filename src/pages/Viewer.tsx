@@ -6,7 +6,7 @@ import { leaveStage, createViewerStrategy, setupViewerStageEvents } from "../ivs
 import { Stage } from 'amazon-ivs-web-broadcast';
 
 function Viewer() {
-  const { signOut, user } = useAuthenticator();
+  const { user } = useAuthenticator();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const stageArn = searchParams.get('stageArn') || '';
@@ -56,7 +56,6 @@ function Viewer() {
                   playsInline
                   style={{ width: '100%', backgroundColor: '#000', aspectRatio: '16/9' }}
                 />
-                <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>参加者: {participantId.slice(0, 8)}...</p>
               </div>
             ))}
           </div>
@@ -204,8 +203,6 @@ function Viewer() {
           </div>
         )}
       </div>
-
-      <button onClick={signOut} style={{ marginTop: '2rem' }}>Sign out</button>
     </main>
   );
 }
