@@ -14,7 +14,8 @@
     "amazon-ivs-web-broadcast": "^1.31.1",
     "aws-amplify": "~6.15.10",
     "react": "~18.3.1",
-    "react-dom": "~18.3.1"
+    "react-dom": "~18.3.1",
+    "react-router-dom": "^7.13.0"
   },
   "engines": {
     "node": ">= 20.20.0",
