@@ -27,3 +27,6 @@ dist-ssr
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+# 環境変数
+.env

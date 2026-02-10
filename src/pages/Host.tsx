@@ -6,7 +6,7 @@ import { joinStage, leaveStage, createStrategy } from "../ivs";
 import { Stage } from 'amazon-ivs-web-broadcast';
 
 function Host() {
-  const { signOut } = useAuthenticator();
+  const { signOut, user } = useAuthenticator();
   const navigate = useNavigate();
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
@@ -17,7 +17,6 @@ function Host() {
   const [strategy, setStrategy] = useState<any>(null);
   const [isVideoMuted, setIsVideoMuted] = useState<boolean>(false);
   const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
-  const [token, setToken] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ホスト参加者の映像を表示
@@ -98,30 +97,27 @@ function Host() {
             style={{ width: '100%', maxWidth: '640px', marginBottom: '1rem', display: 'block' }}
           />
           <div style={{ marginBottom: '1rem' }}>
-            <input
-              type="text"
-              placeholder="Stage Token"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              style={{ 
-                padding: '0.5rem', 
-                marginBottom: '0.5rem',
-                width: '100%',
-                maxWidth: '400px',
-                display: 'block'
-              }}
-            />
             {!stage ? (
               <button 
                 onClick={async () => {
-                  if (!token || !cameraStream) return;
+                  if (!cameraStream) return;
                   const microphoneStream = (window as any).microphoneStream;
                   if (!microphoneStream) return;
+
+                  // Lambda関数URLからトークンを取得
+                  const res = await fetch(import.meta.env.VITE_CREATE_STAGE_TOKEN_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user?.signInDetails?.loginId ?? '' }),
+                  });
+                  const data = await res.json();
+                  const fetchedToken = data.token;
+                  if (!fetchedToken) return;
                   
                   const audioTrack = microphoneStream.getAudioTracks()[0];
                   const videoTrack = cameraStream.getVideoTracks()[0];
                   const newStrategy = createStrategy(audioTrack, videoTrack);
-                  const newStage = await joinStage(token, newStrategy);
+                  const newStage = await joinStage(fetchedToken, newStrategy);
                   setStrategy(newStrategy);
                   setStage(newStage);
                   setIsVideoMuted(false);

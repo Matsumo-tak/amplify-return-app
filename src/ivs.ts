@@ -41,7 +41,7 @@ export function createViewerStrategy(audioTrack: MediaStreamTrack | null) {
     audioTrack: myAudioTrack,
     stageStreamsToPublish() {
       // 音声トラックがある場合のみ配信
-      return myAudioTrack ? [this.audioTrack] : [];
+      return myAudioTrack ? [myAudioTrack] : [];
     },
     shouldPublishParticipant() {
       return true;

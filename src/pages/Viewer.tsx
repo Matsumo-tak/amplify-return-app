@@ -6,7 +6,7 @@ import { leaveStage, createViewerStrategy, setupViewerStageEvents } from "../ivs
 import { Stage } from 'amazon-ivs-web-broadcast';
 
 function Viewer() {
-  const { signOut } = useAuthenticator();
+  const { signOut, user } = useAuthenticator();
   const navigate = useNavigate();
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioId, setSelectedAudioId] = useState<string>('');
@@ -131,22 +131,18 @@ function Viewer() {
       </div>
 
       <div style={{ marginBottom: '1rem' }}>
-        <input
-          type="text"
-          placeholder="Stage Token"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          style={{ 
-            padding: '0.5rem', 
-            marginBottom: '0.5rem',
-            width: '100%',
-            maxWidth: '400px',
-            display: 'block'
-          }}
-        />
         {!stage ? (
           <button onClick={async () => {
-            if (!token) return;
+            // Lambda関数URLからトークンを取得
+            const res = await fetch(import.meta.env.VITE_CREATE_STAGE_TOKEN_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: user?.signInDetails?.loginId ?? '' }),
+            });
+            const data = await res.json();
+            const fetchedToken = data.token;
+            if (!fetchedToken) return;
+            setToken(fetchedToken);
             
             // マイクがある場合はそれを使用、ない場合はnullで進む
             const audioTrack = microphoneStream?.getAudioTracks()[0] || null;
@@ -155,7 +151,7 @@ function Viewer() {
               newStrategy.audioTrack.setMuted(true);
             }
             
-            const newStage = new Stage(token, newStrategy);
+            const newStage = new Stage(fetchedToken, newStrategy);
             
             setupViewerStageEvents(
               newStage,
